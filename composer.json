@@ -1,0 +1,19 @@
+{
+    "name": "yuan1994/tp5-mailer",
+    "description": "a powerful and beautiful php mailer for ThinkPHP5 based SwiftMailer",
+    "type": "library",
+    "require": {
+        "php": ">=5.4.0",
+        "swiftmailer/swiftmailer": "^5.4"
+    },
+    "license": "Apache 2.0",
+    "authors": [
+        {
+            "name": "yuan1994",
+            "email": "tianpian0805@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {"tp5\\": "src/tp5"}
+    }
+}
