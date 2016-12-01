@@ -16,7 +16,7 @@ $mailer->from('tianpian0805@gmail.com', 'yuan1994')
 ## 安装
 使用 Composer 安装:
 ```
-composer require "yuan1994/tp-mailer"
+composer require yuan1994/tp5-mailer
 ```
 
 ## 配置
