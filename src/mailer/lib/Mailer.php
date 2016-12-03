@@ -379,7 +379,7 @@ abstract class Mailer
             $this->errMsg = $e->getMessage();
             if (Config::get('mail.debug')) {
                 // 调试模式直接抛出异常
-                throw new MailerException($e->getMessage());
+                throw new Exception($e->getMessage());
             } else {
                 return false;
             }
@@ -440,9 +440,42 @@ abstract class Mailer
                 : $this->RDelimiter
             );
         foreach ($param as $k => $v) {
+            // 处理变量中包含有对元数据嵌入的变量
+            $this->embedImage($k, $v, $param);
             $ret[$leftDelimiter . $k . $rightDelimiter] = $v;
         }
 
         return $ret;
+    }
+
+    /**
+     * 对嵌入元数据的变量进行处理
+     *
+     * @param $k
+     * @param $v
+     * @param $param
+     */
+    protected function embedImage(&$k, &$v, &$param)
+    {
+        $flag = Config::has('embed') ? Config::get('embed') : 'embed:';
+        if (false !== strpos($k, $flag)) {
+            if (is_array($v) && $v) {
+                if (!isset($v[1])) {
+                    $v[1] = MailerConfig::MIME_JPEG;
+                }
+                if (!isset($v[2])) {
+                    $v[2] = 'image.jpg';
+                }
+                list($imgData, $name, $mime) = $v;
+                $v = $this->message->embed(
+                    \Swift_Image::newInstance($imgData, $name, $mime)
+                );
+            } else {
+                $v = $this->message->embed(\Swift_Image::fromPath($v));
+            }
+            unset($param[$k]);
+            $k = substr($k, strlen($flag));
+            $param[$k] = $v;
+        }
     }
 }

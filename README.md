@@ -21,6 +21,11 @@
     * [设置邮件内容 - HTML](#设置邮件内容---html)
     * [设置邮件内容 - 纯文本](#设置邮件内容---纯文本)
     * [设置邮件内容 - 模板](#设置邮件内容---模板)
+    * [设将图片作为元数据嵌入到邮件中](#将图片作为元数据嵌入到邮件中)
+        * [配置嵌入标签](#配置嵌入标签)
+        * [模板或HTML中设置变量](#模板或html中设置变量)
+        * [传递变量参数和值](#传递变量参数和值)
+        * [示例](#示例)
     * [添加附件](#添加附件)
     * [设置消息加密/签名](#设置消息加密签名)
     * [设置字符编码](#设置字符编码)
@@ -30,7 +35,7 @@
     * [注册插件](#注册插件)
     * [发送邮件](#发送邮件)
 * [其他框架扩展](#其他框架扩展)
-    * [第一件事: 实现 view 方法](#第一件事-实现-view-方法)
+    * [第一件事: 实现 `$mailer->view()` 方法](#第一件事-实现-$mailer->view()-方法)
     * [第二件事: 添加自己框架的配置读取方法](#第二件事-添加自己框架的配置读取方法)
 * [中文文件名乱码问题](#中文文件名乱码问题)
 * [Issues](#issues)
@@ -143,6 +148,7 @@ return [
         'right_delimiter' => '}', // 模板变量替换右定界符, 可选, 默认为 }
         'log_driver'      => '', // 日志驱动类, 可选, 如果启用必须实现静态 public static function write($content, $level = 'debug') 方法
         'log_path'        => '\\mailer\\Log', // 日志路径, 可选, 不配置日志驱动时启用默认日志驱动, 默认路径是 /path/to/tp-mailer/log, 要保证该目录有可写权限, 最好配置自己的日志路径
+        'embed'           => 'embed:', // 邮件中嵌入图片元数据标记
 ];
 ```
 
@@ -259,6 +265,71 @@ ThinkPHP系列模板, 具体请看ThinkPHP各版本框架的模板怎么用, 第
 $mailer->view('mail/register');
 $mailer->view('admin@mail/register', ['account' => $account, 'name' => $name]);
 ```
+
+### 将图片作为元数据嵌入到邮件中
+邮件内容中包含图片的, 可以直接指定 `img` 标签的 `src` 属性为远程图片地址, 此处图片地址必须为远程图片地址, 必须为一个带域名的完整图片链接, 这似乎很麻烦, 所以你还可以将图片作为元数据嵌入到邮件中, 至于其他文件是否也可以嵌入请自己尝试, 详情请参考 [SwiftMailer Embedding Inline Media Files](http://swiftmailer.org/docs/messages.html#embedding-inline-media-files)
+
+下面介绍一下 `tp-mailer` 如何快速简便的将图片元数据嵌入到邮件中:
+
+#### 配置嵌入标签
+嵌入元数据需要在模板赋值或者使用 `html()` 传递变量时, 给变量添加特殊的标签, 该嵌入标签默认为 `embed:`, 你可以修改配置文件中 `embed` 项, 修改为你想要的形式
+
+#### 模板或HTML中设置变量
+在模板中, 例如 ThinkPHP 全系列都是使用 `{$var}` 的形式传递变量, 假设变量为 `image_src`, 那么模板中填写 `{$image_src}`, 如果是在HTML中, 请使用 `{image_src}`, 注意如果修改过左、右定界符请使用自己定义的左右定界符
+
+#### 传递变量参数和值
+在 `html()` 和 `view()` 方法的第二个参数里, 该数组必须有一个变量, 格式为 `['embed:image_src'] => '/path/to/image.jpg']` 或者 `['embed:image_src'] => ['file_stream', 'filemime', 'filename']]`, 即参数数组的键名是上面配置的 `嵌入标签 + 变量名`, 但值有两种情况:
+
+第一, 如果值为字符串, 则该值为图片的路径 (绝对路径或相对路径) 或者 有效的url地址;
+
+第二, 如果值为数组, 数组为 `['stream', 'mime', 'name']` 的形式, 其中 `stream` 表示图片的数据流, 即是未保存的文件数据流, 例如 `file_get_contents()` 方法获取的文件数据流, 第二个参数可选, 为文件的mime类型, 默认为 `image/jpeg`, 第三个参数为文件名, 默认为 `image.jpg`
+
+#### 示例
+```
+Mailer::instance()
+    ->to('tianpian0805@gmail.com', 'yuan1994') 
+    ->subject('测试邮件模板中嵌入图片元数据')
+    ->view('index@mail/index', [
+        'date' => date('Y-m-d H:i:s'),     
+        'embed:image' => ROOT_PATH . 'image.jpg',
+        // 'embed:image' => 'http://image34.360doc.com/DownloadImg/2011/08/2222/16275597_64.jpg',
+        // 'embed:image' => [file_get_contents(ROOT_PATH . 'image1.jpg')],
+        // 'embed:image' => [file_get_contents(ROOT_PATH . 'image1.jpg', 'image/png', '图片.png')],
+     ])
+    ->send();
+```
+其中模板的内容如下:
+```
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>测试邮件</title>
+</head>
+<body>
+<p>尊敬的yuan1994:</p>
+<p>     这是一封模板测试邮件</p>
+<p>{$date}</p>
+<p>
+    <img src="{$image}" alt="">
+</p>
+</body>
+</html>
+```
+在 HTML 中使用一样:
+```
+Mailer::instance()
+    ->to('tianpian0805@gmail.com', 'yuan1994') 
+    ->subject('测试邮件模板中嵌入图片元数据')
+    ->html('<img src="{image}" />图片测试', [
+        'embed:image' => ROOT_PATH . 'image.jpg',
+        // 'embed:image' => 'http://image34.360doc.com/DownloadImg/2011/08/2222/16275597_64.jpg',
+        // 'embed:image' => [file_get_contents(ROOT_PATH . 'image1.jpg')],
+        // 'embed:image' => [file_get_contents(ROOT_PATH . 'image1.jpg', 'image/png', '图片.png')],
+     ])
+    ->send();
+```
+
 
 ### 添加附件
 已修复SwiftMailer设置中文文件名出现乱码的bug
@@ -425,7 +496,7 @@ $mailer->getFails();
 ## 其他框架扩展
 其他框架扩展只需做两件事, 部署安装使用和文档一样
 
-### 第一件事: 实现 view 方法
+### 第一件事: 实现 `$mailer->view()` 方法
 写自己的类继承 `mailer\lib\Mailer`, 然后实现里面的 `view` 方法, 根据自己的框架渲染出自己的模板:
 ```
 

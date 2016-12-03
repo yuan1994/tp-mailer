@@ -27,6 +27,8 @@ class Mailer extends \mailer\lib\Mailer
         $view = Think::instance('Think\View');
         if ($param) {
             foreach ($param as $key => $value) {
+                // 处理变量中包含有对元数据嵌入的变量
+                $this->embedImage($key, $value, $param);
                 $view->assign($key, $value);
             }
         }

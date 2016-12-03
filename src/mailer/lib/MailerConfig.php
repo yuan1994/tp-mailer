@@ -27,4 +27,10 @@ class MailerConfig
     const PRIORITY_NORMAL = 3;
     const PRIORITY_LOW = 4;
     const PRIORITY_LOWEST = 5;
+
+    /******* 常见图片Mime *******/
+    const MIME_JPEG = 'image/jpeg';
+    const MIME_PNG = 'image/png';
+    const MIME_GIF = 'image/gif';
+    const MIME_BMP = 'application/x-bmp';
 }

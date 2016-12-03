@@ -26,6 +26,10 @@ class Mailer extends \mailer\lib\Mailer
     public function view($template, $param = [], $config = [])
     {
         $view = View::instance(Config::get('template'), Config::get('view_replace_str'));
+        // 处理变量中包含有对元数据嵌入的变量
+        foreach ($param as $k => $v) {
+            $this->embedImage($k, $v, $param);
+        }
         $content = $view->fetch($template, $param, [], $config);
 
         return $this->html($content);
