@@ -3,7 +3,42 @@
 
 同时了方便其他框架或者非框架使用, Tp Mailer也非常容易拓展融合到其他框架中, 欢迎大家 `Fork` 和 `Star`, 提交代码让Tp Mailer支持更多框架
 
-## 优雅的发送邮件: **ThinkPHP5 示例**
+## 目录 
+* [优雅的发送邮件](#优雅的发送邮件) 
+* [安装](#安装) 
+    * [使用 Composer 安装 (强烈推荐)](#使用-composer-安装-强烈推荐)
+    * [github下载 或 直接手动下载源码](#github下载-或-直接手动下载源码)
+        * [下载文件](#下载文件)
+        * [移动文件夹](#移动文件夹)
+        * [引入自动载入文件](#引入自动载入文件)
+* [配置](#配置) 
+* [使用](#使用) 
+    * [使用Tp Mailer](#使用tp-mailer)
+    * [创建实例](#创建实例)
+    * [设置收件人](#设置收件人)
+    * [设置发件人](#设置发件人)
+    * [设置邮件主题](#设置邮件主题)
+    * [设置邮件内容 - HTML](#设置邮件内容---html)
+    * [设置邮件内容 - 纯文本](#设置邮件内容---纯文本)
+    * [设置邮件内容 - 模板](#设置邮件内容---模板)
+    * [添加附件](#添加附件)
+    * [设置消息加密/签名](#设置消息加密签名)
+    * [设置字符编码](#设置字符编码)
+    * [设置邮件最大长度](#设置邮件最大长度)
+    * [设置邮件优先级](#设置邮件优先级)
+    * [Requesting a Read Receipt](#requesting-a-read-receipt)
+    * [注册插件](#注册插件)
+    * [发送邮件](#发送邮件)
+* [其他框架扩展](#其他框架扩展)
+    * [第一件事: 实现 view 方法](#第一件事-实现-view-方法)
+    * [第二件事: 添加自己框架的配置读取方法](#第二件事-添加自己框架的配置读取方法)
+* [中文文件名乱码问题](#中文文件名乱码问题)
+* [Issues](#issues)
+* [License](#license)
+
+
+## 优雅的发送邮件
+**ThinkPHP5 示例**
 ```
 use mailer\tp5\Mailer;
 
@@ -49,6 +84,7 @@ $mailer->send(function($mailer, $message) {
 });
 ```
 
+
 ## 安装
 ### 使用 Composer 安装 (强烈推荐):
 支持 `psr-4` 规范, 开箱即用
@@ -58,6 +94,7 @@ composer require yuan1994/tp-mailer
 
 ### github下载 或 直接手动下载源码:
 需手动引入自动载入文件
+
 #### 下载文件:
 git clone https://github.com/yuan1994/tp-mailer tp-mailer
 
@@ -86,7 +123,6 @@ git clone https://github.com/swiftmailer/swiftmailer swiftmailer
 
 `require_once '/path/to/tp-mailer/src/autoload.php`;
 
-[TOC]
 
 ## 配置
 在配置文件里配置如下信息, 可以配置在 `mail.php` 或 `config.php` 文件中, 但要保证能通过 `mail.driver`, `mail.host` 访问到配置信息, 内容如下:
@@ -109,6 +145,7 @@ return [
         'log_path'        => '\\mailer\\Log', // 日志路径, 可选, 不配置日志驱动时启用默认日志驱动, 默认路径是 /path/to/tp-mailer/log, 要保证该目录有可写权限, 最好配置自己的日志路径
 ];
 ```
+
 
 ## 使用
 > 以下使用及方法兼容所有框架, 包括 ThinkPHP5, ThinkPHP3.2, ThinkPHP3.1, 唯一有所区别的是 ThinkPHP3.2 和 ThinkPHP3.1 不支持composer自动载入, 需手动引入自动载入文件, 使用时引入或者全局自动引入:
@@ -241,7 +278,8 @@ $mailer->attach(ROOT_PATH . 'foo.ext', function($attachment, $mailer) {
 });
 ```
 
-### 设置消息加密/签名 使用方法请参考 [SwiftMailer Signed/Encrypted Message](http://swiftmailer.org/docs/messages.html#signed-encrypted-message)
+### 设置消息加密/签名
+使用方法请参考 [SwiftMailer Signed/Encrypted Message](http://swiftmailer.org/docs/messages.html#signed-encrypted-message)
 ```
 $mailer->signCertificate(function() {
     // $signer->setSignCertificate('/path/to/certificate.pem', '/path/to/private-key.pem');
@@ -383,6 +421,7 @@ $mailer->getFails();
 
 更多文档请参考 [SwiftMailer](http://swiftmailer.org/docs/)
 
+
 ## 其他框架扩展
 其他框架扩展只需做两件事, 部署安装使用和文档一样
 
@@ -423,8 +462,10 @@ $mailer->attach(ROOT_PATH . 'foo.ext', function($attachment, $mailer) {
 }
 ```
 
+
 ## Issues
 如果有遇到问题请提交 [issues](https://github.com/yuan1994/tp-mailer/issues)
+
 
 ## License
 Apache 2.0
