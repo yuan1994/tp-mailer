@@ -1,6 +1,6 @@
 {
     "name": "yuan1994/tp5-mailer",
-    "description": "a powerful and beautiful php mailer for ThinkPHP5 based SwiftMailer",
+    "description": "A powerful and beautiful php mailer for All of ThinkPHP and Other PHP Framework based SwiftMailer",
     "type": "library",
     "require": {
         "php": ">=5.4.0",
