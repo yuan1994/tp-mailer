@@ -10,14 +10,19 @@
 
 namespace mailer\tp31;
 
+/**
+ * Class Mailer
+ * @package mailer\tp31
+ */
 class Mailer extends \mailer\lib\Mailer
 {
     /**
      * 载入一个模板作为邮件内容
      *
      * @param string $template
-     * @param array $param
-     * @param array $config
+     * @param array  $param
+     * @param array  $config
+     *
      * @return Mailer
      */
     public function view($template, $param = [], $config = [])
@@ -31,6 +36,7 @@ class Mailer extends \mailer\lib\Mailer
             }
         }
         $content = $view->fetch($template);
+
         return $this->html($content);
     }
 }

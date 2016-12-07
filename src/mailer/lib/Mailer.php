@@ -13,10 +13,21 @@ namespace mailer\lib;
 use Swift_Mailer;
 use Swift_Message;
 
-abstract class Mailer
+/**
+ * Class Mailer
+ * @package mailer\lib
+ * @method Mailer view()
+ */
+class Mailer
 {
-    // 单例
+    /*
+     * @var Mailer 单例
+     */
     protected static $instance;
+    /**
+     * @var array 注册的方法
+     */
+    protected static $methods = [];
     /**
      * @var \Swift_Message
      */
@@ -25,19 +36,28 @@ abstract class Mailer
      * @var \Swift_SmtpTransport|\Swift_SendmailTransport|\Swift_MailTransport
      */
     protected $transport;
-    // 以行设置文本的内容
+    /**
+     * @var array 以行设置文本的内容
+     */
     protected $line = [];
-    // 注册组件列表
+    /**
+     * @var array 注册组件列表
+     */
     protected $plugin = [];
-    // 错误信息
+    /**
+     * @var string|null 错误信息
+     */
     protected $errMsg;
-    // 发送失败的帐号
+    /**
+     * @var array|null 发送失败的帐号
+     */
     protected $fails;
-    // 左定界符
-    protected $LDelimiter = '{';
-    // 右定界符
-    protected $RDelimiter = '}';
 
+    /**
+     * @param null $transport
+     *
+     * @return Mailer
+     */
     public static function instance($transport = null)
     {
         if (null === self::$instance) {
@@ -47,6 +67,42 @@ abstract class Mailer
         return self::$instance;
     }
 
+    /**
+     * 动态注入方法
+     *
+     * @param $methodName
+     * @param $methodCallable
+     */
+    public static function addMethod($methodName, $methodCallable)
+    {
+        if (!is_callable($methodCallable)) {
+            throw new InvalidArgumentException('Second param must be callable');
+        }
+        self::$methods[$methodName] = \Closure::bind($methodCallable, Mailer::instance(), get_class());
+    }
+
+    /**
+     * 动态调用方法
+     *
+     * @param       $methodName
+     * @param array $args
+     *
+     * @return $this
+     */
+    public function __call($methodName, array $args)
+    {
+        if (isset(self::$methods[$methodName])) {
+            return call_user_func_array(self::$methods[$methodName], $args);
+        }
+
+        throw new BadMethodCallException('There is no method with the given name to call');
+    }
+
+    /**
+     * Mailer constructor.
+     *
+     * @param mixed $transport
+     */
     public function __construct($transport = null)
     {
         $this->transport = $transport;
@@ -63,30 +119,19 @@ abstract class Mailer
         $this->message = Swift_Message::newInstance(
             null,
             null,
-            Config::get('mail.content_type'),
-            Config::get('mail.charset')
+            Config::get('content_type'),
+            Config::get('charset')
         )
-            ->setFrom(Config::get('mail.addr'), Config::get('mail.name'));
+            ->setFrom(Config::get('addr'), Config::get('name'));
 
         return $this;
     }
 
     /**
-     * 载入一个模板作为邮件内容
-     *
-     * 实现$template指定模板路径, $param设置模板替换参数, 最后能正常渲染出HTML
-     *
-     * @param string $template
-     * @param array $param
-     * @param array $config
-     * @return Mailer
-     */
-    abstract public function view($template, $param = [], $config = []);
-
-    /**
      * 设置邮件主题
      *
      * @param $subject
+     *
      * @return $this
      */
     public function subject($subject)
@@ -99,8 +144,9 @@ abstract class Mailer
     /**
      * 设置发件人
      *
-     * @param $address
+     * @param      $address
      * @param null $name
+     *
      * @return $this
      */
     public function from($address, $name = null)
@@ -113,8 +159,9 @@ abstract class Mailer
     /**
      * 设置收件人
      *
-     * @param $address
+     * @param      $address
      * @param null $name
+     *
      * @return $this
      */
     public function to($address, $name = null)
@@ -127,9 +174,10 @@ abstract class Mailer
     /**
      * 设置邮件内容为HTML内容
      *
-     * @param $content
+     * @param       $content
      * @param array $param
      * @param array $config
+     *
      * @return $this
      */
     public function html($content, $param = [], $config = [])
@@ -145,9 +193,10 @@ abstract class Mailer
     /**
      * 设置邮件内容为纯文本内容
      *
-     * @param $content
+     * @param       $content
      * @param array $param
      * @param array $config
+     *
      * @return $this
      */
     public function text($content, $param = [], $config = [])
@@ -163,9 +212,10 @@ abstract class Mailer
     /**
      * 设置邮件内容为纯文本内容
      *
-     * @param $content
+     * @param       $content
      * @param array $param
      * @param array $config
+     *
      * @return Mailer
      */
     public function raw($content, $param = [], $config = [])
@@ -176,9 +226,10 @@ abstract class Mailer
     /**
      * 添加一行数据
      *
-     * @param $content
+     * @param       $content
      * @param array $param
      * @param array $config
+     *
      * @return $this
      */
     public function line($content = '', $param = [], $config = [])
@@ -191,8 +242,9 @@ abstract class Mailer
     /**
      * 添加附件
      *
-     * @param string $filePath
+     * @param string                        $filePath
      * @param string|\Swift_Attachment|null $attr
+     *
      * @return $this
      */
     public function attach($filePath, $attr = null)
@@ -218,6 +270,7 @@ abstract class Mailer
      * Signed/Encrypted Message
      *
      * @param \Swift_Signers_SMimeSigner $smimeSigner
+     *
      * @return $this
      */
     public function signCertificate($smimeSigner)
@@ -235,6 +288,7 @@ abstract class Mailer
      * 设置字符编码
      *
      * @param string $charset
+     *
      * @return $this
      */
     public function charset($charset)
@@ -248,6 +302,7 @@ abstract class Mailer
      * 设置邮件最大长度
      *
      * @param int $length
+     *
      * @return $this
      */
     public function lineLength($length)
@@ -261,6 +316,7 @@ abstract class Mailer
      * 设置优先级
      *
      * @param int $priority
+     *
      * @return $this
      */
     public function priority($priority = MailerConfig::PRIORITY_HIGHEST)
@@ -274,6 +330,7 @@ abstract class Mailer
      * Requesting a Read Receipt
      *
      * @param string $address
+     *
      * @return $this
      */
     public function readReceiptTo($address)
@@ -316,11 +373,12 @@ abstract class Mailer
     /**
      * 发送邮件
      *
-     * @param \Closure|null $message
+     * @param \Closure|null        $message
      * @param \Closure|string|null $transport
-     * @param \Closure|null $send
+     * @param \Closure|null        $send
+     *
      * @return bool|int
-     * @throws MailerException
+     * @throws Exception
      */
     public function send($message = null, $transport = null, $send = null)
     {
@@ -339,11 +397,7 @@ abstract class Mailer
                 $transport = $this->transport;
             }
             // 直接传递的是Swift_Transport对象
-            if (
-                $transport instanceof \Swift_SmtpTransport
-                || $transport instanceof \Swift_SendmailTransport
-                || $transport instanceof \Swift_MailTransport
-            ) {
+            if (is_object($transport)) {
                 $transportDriver = $transport;
             } else {
                 // 其他匿名函数和驱动名称
@@ -357,7 +411,7 @@ abstract class Mailer
 
             $swiftMailer = Swift_Mailer::newInstance($transportDriver);
             // debug模式记录日志
-            if (Config::get('mail.debug')) {
+            if (Config::get('debug')) {
                 Log::write(var_export($this->getHeadersString(), true), 'MAILER');
             }
 
@@ -377,7 +431,7 @@ abstract class Mailer
             }
         } catch (\Exception $e) {
             $this->errMsg = $e->getMessage();
-            if (Config::get('mail.debug')) {
+            if (Config::get('debug')) {
                 // 调试模式直接抛出异常
                 throw new Exception($e->getMessage());
             } else {
@@ -410,6 +464,7 @@ abstract class Mailer
      * 中文文件名编码, 防止乱码
      *
      * @param $string
+     *
      * @return string
      */
     public function cnEncode($string)
@@ -422,23 +477,18 @@ abstract class Mailer
      *
      * @param array $param
      * @param array $config
+     *
      * @return mixed
      */
     protected function parseParam(array $param, array $config = [])
     {
         $ret = [];
         $leftDelimiter = isset($config['left_delimiter'])
-            ? $config['left_delimiter'] : (
-            Config::has('mail.left_delimiter')
-                ? Config::get('mail.left_delimiter')
-                : $this->LDelimiter
-            );
+            ? $config['left_delimiter']
+            : Config::get('left_delimiter', '{');
         $rightDelimiter = isset($config['right_delimiter'])
-            ? $config['right_delimiter'] : (
-            Config::has('mail.right_delimiter')
-                ? Config::get('mail.right_delimiter')
-                : $this->RDelimiter
-            );
+            ? $config['right_delimiter']
+            : Config::get('right_delimiter', '}');
         foreach ($param as $k => $v) {
             // 处理变量中包含有对元数据嵌入的变量
             $this->embedImage($k, $v, $param);
@@ -457,7 +507,7 @@ abstract class Mailer
      */
     protected function embedImage(&$k, &$v, &$param)
     {
-        $flag = Config::has('embed') ? Config::get('embed') : 'embed:';
+        $flag = Config::get('embed', 'embed:');
         if (false !== strpos($k, $flag)) {
             if (is_array($v) && $v) {
                 if (!isset($v[1])) {

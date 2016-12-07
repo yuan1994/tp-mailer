@@ -10,6 +10,10 @@
 
 namespace mailer\lib;
 
+/**
+ * Class MailerConfig
+ * @package mailer\lib
+ */
 class MailerConfig
 {
     /********* 邮件驱动 *********/

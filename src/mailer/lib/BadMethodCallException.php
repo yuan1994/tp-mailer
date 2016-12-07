@@ -11,10 +11,10 @@
 namespace mailer\lib;
 
 /**
- * Class Exception
+ * Class BadMethodCallException
  * @package mailer\lib
  */
-class Exception extends \Exception
+class BadMethodCallException extends \BadMethodCallException
 {
 
 }

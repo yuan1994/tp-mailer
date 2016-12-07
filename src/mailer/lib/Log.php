@@ -10,54 +10,44 @@
 
 namespace mailer\lib;
 
-if (Config::get('mail.log_driver')) {
+/**
+ * Class Log
+ * @package mailer\lib
+ */
+class Log
+{
+    const DEBUG = 'debug';
+    const INFO = 'info';
+
     /**
-     * 自定义日志驱动
-     *
-     * Class Log
-     * @package mailer\lib
+     * @var object 日志驱动
      */
-    class Log
+    private static $driver;
+
+
+    public static function init()
     {
-        public static function __callStatic($name, $arguments)
-        {
-            $driver = Config::get('mail.log_driver');
-            $driver::$name($arguments[0], $arguments[1]);
+        if (null === self::$driver) {
+            if (Config::get('log_driver')) {
+                $driver = Config::get('log_driver');
+                self::$driver = $driver;
+            } else {
+                self::$driver = \mailer\lib\log\File::class;
+            }
         }
     }
-}
-//elseif (class_exists('\\think1\\Log')) {
-//    /**
-//     * thinkphp5日志驱动
-//     *
-//     * Class Log
-//     * @package mailer\lib
-//     */
-//    class Log extends \think\Log
-//    {
-//
-//    }
-//} elseif (class_exists('\\Think1\\Log')) {
-//    /**
-//     * ThinkPHP3日志驱动
-//     *
-//     * Class Log
-//     * @package mailer\lib
-//     */
-//    class Log extends \Think\Log
-//    {
-//
-//    }
-//}
-else {
-    /**
-     * 默认日志类
-     *
-     * Class Log
-     * @package mailer\lib
-     */
-    class Log extends LogDefault
-    {
 
+    /**
+     * 写入日志
+     *
+     * @param        $content
+     * @param string $level
+     */
+    public static function write($content, $level = self::DEBUG)
+    {
+        self::init();
+
+        $driver = self::$driver;
+        $driver::write($content, $level);
     }
 }

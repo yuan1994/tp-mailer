@@ -20,6 +20,6 @@ return [
     'left_delimiter'  => '{', // 模板变量替换左定界符, 可选, 默认为 {
     'right_delimiter' => '}', // 模板变量替换右定界符, 可选, 默认为 }
     'log_driver'      => '', // 日志驱动类, 可选, 如果启用必须实现静态 public static function write($content, $level = 'debug') 方法
-    'log_path'        => '\\mailer\\Log', // 日志路径, 可选, 不配置日志驱动时启用默认日志驱动, 默认路径是 /path/to/tp-mailer/log, 要保证该目录有可写权限, 最好配置自己的日志路径
+    'log_path'        => '', // 日志路径, 可选, 不配置日志驱动时启用默认日志驱动, 默认路径是 /path/to/tp-mailer/log, 要保证该目录有可写权限, 最好配置自己的日志路径
     'embed'           => 'embed:', // 邮件中嵌入图片元数据标记
 ];

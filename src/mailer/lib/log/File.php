@@ -8,9 +8,11 @@
  * @license   http://www.apache.org/licenses/LICENSE-2.0
  */
 
-namespace mailer\lib;
+namespace mailer\lib\log;
 
-class LogDefault
+use mailer\lib\Config;
+
+class File
 {
     const DEBUG = 'debug';
     const INFO = 'info';
@@ -24,9 +26,7 @@ class LogDefault
     public static function write($content, $level = self::DEBUG)
     {
         $now = date(' c ');
-        $path = Config::has('mail.log_path')
-            ? Config::get('mail.log_path')
-            : __DIR__ . '/../../../log';
+        $path = Config::get('mail.log_path', __DIR__ . '/../../../../log');
         $destination = $path . '/mailer-' . date('Y-m-d') . '.log';
         // 自动创建日志目录
         if (!is_dir($path)) {

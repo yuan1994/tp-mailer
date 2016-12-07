@@ -14,6 +14,10 @@ use Swift_SmtpTransport;
 use Swift_SendmailTransport;
 use Swift_MailTransport;
 
+/**
+ * Class Transport
+ * @package mailer\lib
+ */
 class Transport
 {
     // 单例
@@ -32,11 +36,12 @@ class Transport
      * 创建一个smtp传输对象
      *
      * @param array $config 配置信息
+     *
      * @return Swift_SmtpTransport
      */
     public function createSmtpDriver($config = [])
     {
-        $config = array_merge(Config::get('mail'), $config);
+        $config = array_merge(Config::get(), $config);
 
         $transport = Swift_SmtpTransport::newInstance(
             $config['host'], $config['port'], $config['security']
@@ -58,12 +63,13 @@ class Transport
      * 创建一个sendmail传输对象
      *
      * @param $sendmail null|string sendmail配置
+     *
      * @return Swift_SendmailTransport
      */
     public function createSendmailDriver($sendmail = null)
     {
         $transport = Swift_SendmailTransport::newInstance(
-            $sendmail ? $sendmail : Config::get('mail.sendmail')
+            $sendmail ? $sendmail : Config::get('sendmail')
         );
 
         return $transport;
@@ -84,17 +90,32 @@ class Transport
     /**
      * 获取邮件驱动
      *
-     * @param null|string $driver 发送邮件驱动名称
-     * @return Swift_SmtpTransport|Swift_SendmailTransport|Swift_MailTransport
+     * @param mixed $driver 发送邮件驱动名称
+     *
+     * @return object
      * @throws Exception
      */
     public function getDriver($driver = null)
     {
-        $driverName = $driver ? $driver : Config::get('mail.driver');
-        $driver = 'create' . ucfirst($driverName) . 'Driver';
-        if (!method_exists($this, $driver)) {
-            throw new Exception("Mailer driver {$driverName} not exist");
+        $driverName = $driver ? $driver : Config::get('driver');
+        if (is_array($driverName)) {
+            // 驱动为数组，表示类的某个方法
+            if (!is_callable($driverName)) {
+                throw new BadMethodCallException('Method Not Found: ' . $driverName[0] . '->' . $driverName[1] . '()');
+            }
+
+            return call_user_func_array($driverName, []);
+        } elseif (is_object($driverName)) {
+            // 驱动为对象直接返回
+            return $driverName;
+        } elseif (is_string($driverName)) {
+            // 驱动为字符串，为内置驱动
+            $driver = 'create' . ucfirst($driverName) . 'Driver';
+            if (!method_exists($this, $driver)) {
+                throw new BadMethodCallException("Mailer driver {$driverName} not exist");
+            }
         }
+
 
         return $this->$driver();
     }

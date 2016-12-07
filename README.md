@@ -1,4 +1,6 @@
 ## Tp Mailer
+**一款支持所有PHP框架的优美的邮件发送类**，ThinkPHP系列框架开箱即用，其他框架初始化配置即可使用
+
 基于 SwiftMailer 二次开发, 为 ThinkPHP系列框架量身定制, 使 ThinkPHP 支持邮件模板、纯文本、附件邮件发送以及更多邮件功能, 邮件发送简单到只需一行代码
 
 同时了方便其他框架或者非框架使用, Tp Mailer也非常容易拓展融合到其他框架中, 欢迎大家 `Fork` 和 `Star`, 提交代码让Tp Mailer支持更多框架
@@ -12,6 +14,7 @@
         * [移动文件夹](#移动文件夹)
         * [引入自动载入文件](#引入自动载入文件)
 * [配置](#配置) 
+    * [部分配置详解](#部分配置详解)
 * [使用](#使用) 
     * [使用Tp Mailer](#使用tp-mailer)
     * [创建实例](#创建实例)
@@ -21,7 +24,7 @@
     * [设置邮件内容 - HTML](#设置邮件内容---html)
     * [设置邮件内容 - 纯文本](#设置邮件内容---纯文本)
     * [设置邮件内容 - 模板](#设置邮件内容---模板)
-    * [设将图片作为元数据嵌入到邮件中](#将图片作为元数据嵌入到邮件中)
+    * [将图片作为元数据嵌入到邮件中](#将图片作为元数据嵌入到邮件中)
         * [配置嵌入标签](#配置嵌入标签)
         * [模板或HTML中设置变量](#模板或html中设置变量)
         * [传递变量参数和值](#传递变量参数和值)
@@ -34,9 +37,12 @@
     * [Requesting a Read Receipt](#requesting-a-read-receipt)
     * [注册插件](#注册插件)
     * [发送邮件](#发送邮件)
+* [动态配置](#动态配置)
+* [方法注入](#方法注入)
 * [其他框架扩展](#其他框架扩展)
-    * [第一件事: 实现 `$mailer->view()` 方法](#第一件事-实现-mailer-view-方法)
-    * [第二件事: 添加自己框架的配置读取方法](#第二件事-添加自己框架的配置读取方法)
+    * [第一步: 初始化配置项](#第一步-初始化配置项)
+    * [第二步: 实现 `$mailer->view()` 方法](#第二步-实现-mailer-view-方法)
+    * [完整示例](#完整示例)
 * [中文文件名乱码问题](#中文文件名乱码问题)
 * [Issues](#issues)
 * [License](#license)
@@ -147,11 +153,32 @@ return [
         'left_delimiter'  => '{', // 模板变量替换左定界符, 可选, 默认为 {
         'right_delimiter' => '}', // 模板变量替换右定界符, 可选, 默认为 }
         'log_driver'      => '', // 日志驱动类, 可选, 如果启用必须实现静态 public static function write($content, $level = 'debug') 方法
-        'log_path'        => '\\mailer\\Log', // 日志路径, 可选, 不配置日志驱动时启用默认日志驱动, 默认路径是 /path/to/tp-mailer/log, 要保证该目录有可写权限, 最好配置自己的日志路径
+        'log_path'        => '', // 日志路径, 可选, 不配置日志驱动时启用默认日志驱动, 默认路径是 /path/to/tp-mailer/log, 要保证该目录有可写权限, 最好配置自己的日志路径
         'embed'           => 'embed:', // 邮件中嵌入图片元数据标记
 ];
 ```
+### 部分配置详解
+#### driver
+可选值可以是字符串、数组、对象。如果是字符串，只能是 `smtp|sendmail|mail`，即内置的三种邮件驱动；如果是数组，必须是可以实例调用的方法，例如 `['mailer\\lib\\Transport', 'createSmtpDriver']` ，即是调用的 `(new mailer\lib\Transport)->createSmtpDriver()` 方法，如果是对象，就是返回的一个 `Swift_Transport` 对象，详情请查看 SwiftMailer 官网
 
+#### log_left_delimiter & right_delimiter
+该值为内置模板变量 (调用`text()`,`raw()`,`line()`,`html()`方式时传递的变量) 定界值，例如默认定界值时 `{name}`， 如果变量为 `['name' => 'tp-mailer']`，那么 `{name}` 会被替换为 `tp-mailer`，加入模板中变量占位符是 `{$name}`，那么此时可以修改左定界符为 `{$`，此时 `{$name}` 也能被正常替换为 `tp-mailer`
+
+#### log_driver
+日志驱动，如果不配置则为类库自带简单的日志驱动 `mailer\lib\log\File`，可自定义配置为框架的日志驱动，例如 `'log_driver' => '\\think\\Log'`，日志驱动类必须实现静态方法 `write`，例如:
+```
+public static function write($content, $level = 'debug')
+{
+    echo '日志内容：' . $content;
+    echo '日志级别：' . $level;
+}
+```
+
+#### log_path
+日志驱动为默认是日志存储路径，不配置默认为 `tp-mailer/log/`，例如可配置为 `ROOT_PATH . 'runtime/log/'`
+
+#### embed
+图片内联嵌入标识，请参考 [将图片作为元数据嵌入到邮件中](#将图片作为元数据嵌入到邮件中)
 
 ## 使用
 > 以下使用及方法兼容所有框架, 包括 ThinkPHP5, ThinkPHP3.2, ThinkPHP3.1, 唯一有所区别的是 ThinkPHP3.2 和 ThinkPHP3.1 不支持composer自动载入, 需手动引入自动载入文件, 使用时引入或者全局自动引入:
@@ -493,29 +520,163 @@ $mailer->getFails();
 更多文档请参考 [SwiftMailer](http://swiftmailer.org/docs/)
 
 
-## 其他框架扩展
-其他框架扩展只需做两件事, 部署安装使用和文档一样
-
-### 第一件事: 实现 `$mailer->view()` 方法
-写自己的类继承 `mailer\lib\Mailer`, 然后实现里面的 `view` 方法, 根据自己的框架渲染出自己的模板:
+## 动态配置
+`mailer/lib/Config` 可以进行邮件动态配置，可以读取配置或者重新设置默认配置项，也可以用于其他非 ThinkPHP 框架进行配置项初始化
 ```
+class Config
+{
+    /**
+     * 初始化配置项
+     *
+     * @param array $config 请参考配置项里的配置格式，其他非ThinkPHP框架不支持自动探测自动初始化配置项，务必使用该方法初始化配置项
+     */
+    public static function init($config = [])
+    {
+    }
 
     /**
-     * 载入一个模板作为邮件内容
+     * 获取配置参数 为空则获取所有配置
      *
-     * 实现$template指定模板路径, $param设置模板替换参数, 最后能正常渲染出HTML
+     * @param string $name    配置参数名
+     * @param mixed  $default 默认值
      *
-     * @param string $template
-     * @param array $param
-     * @param array $config
-     * @return Mailer
+     * @return mixed
      */
-    abstract public function view($template, $param = [], $config = []);
-```
-详细写法请参考 `mailer\tp5\Mailer` 和 `mailer\tp32\Mailer` 等已有类库的写法
+    public static function get($name = null, $default = null)
+    {
+    }
 
-### 第二件事: 添加自己框架的配置读取方法
-修改 `mailer\lib\Config` 方法, 在下面添加自己框架读取配置的类, 具体要实现的方法请参考 `mailer\lib\tp3\Config`
+    /**
+     * 设置配置参数
+     *
+     * @param string|array $name  配置参数名
+     * @param mixed        $value 配置值
+     */
+    public static function set($name, $value)
+    {
+    }
+}
+
+```
+
+## 方法注入
+`mailer\lib\Mailer` 默认不带 `view()` 方法，但要扩展该类，可以使用继承，也可以直接动态给该类注册方法，使用 `Mailer::addMethod($methodName, $methodCallable)` 进行方法注册，例如给 ThinkPHP5 框架注册 `view()` 方法：
+```
+use mailer\lib\Mailer
+use think\View
+
+Mailer::addMethod('view', function ($template, $param = [], $config = [])
+{
+    $view = View::instance(Config::get('template'), Config::get('view_replace_str'));
+    // 处理变量中包含有对元数据嵌入的变量
+    foreach ($param as $k => $v) {
+        $this->embedImage($k, $v, $param);
+    }
+    $content = $view->fetch($template, $param, [], $config);
+
+    return $this->html($content);
+});
+
+// 不用use mailer\tp5\Mailer，直接使用mailer\lib\Mailer调用view方法发送邮件
+$ret = Mailer::instance()
+        ->to('tianpian0805@gmail.com')
+        ->subject('测试邮件')
+        ->view('index@mail/index', [
+            'date' => date('Y-m-d H:i:s'),
+        ])
+        ->send();
+```
+你也可以根据需要注入其他方法
+
+## 其他框架扩展
+其他框架扩展只需两步, 部署安装使用和文档一样
+
+### 第一步: 初始化配置项
+使用 `mailer\lib\Config` 的 `init()` 方法初始化配置项，例如：
+```
+use mailer\lib\Config
+
+// 配置格式参见前面的配置
+$config = [
+    'driver' => 'smtp',
+    'host'   => 'smtp.qq.com',
+    ...
+    ];
+
+Config::init($config);
+```
+
+### 第二步: 实现 `$mailer->view()` 方法
+写自己的类继承 `mailer\lib\Mailer` 或者 使用 `Mailer::addMethod()` 方法动态注入方法, 然后实现里面的 `view` 方法, 根据自己的框架渲染出自己的模板，如果不需要使用 `view()` 方法可以忽略这一步，直接进入下一步:
+```
+/**
+ * 载入一个模板作为邮件内容
+ *
+ * @param string $template
+ * @param array  $param
+ * @param array  $config
+ *
+ * @return Mailer
+ */
+public function view($template, $param = [], $config = [])
+{
+    $view = View::instance(ThinkConfig::get('template'), ThinkConfig::get('view_replace_str'));
+    // 处理变量中包含有对元数据嵌入的变量
+    foreach ($param as $k => $v) {
+        $this->embedImage($k, $v, $param);
+    }
+    $content = $view->fetch($template, $param, [], $config);
+
+    return $this->html($content);
+}
+```
+
+### 完整示例
+```
+use mailer\lib\Config
+use mailer\lib\Mailer
+
+// 第一步：初始化配置项
+// 配置格式参见前面的配置
+$config = [
+    'driver' => 'smtp',
+    'host'   => 'smtp.qq.com',
+    ...
+    ];
+
+Config::init($config);
+
+// 第二步：注册view方法
+Mailer::addMethod('view', function ($template, $param = [], $config = [])
+{
+    $view = \think\View::instance(Config::get('template'), Config::get('view_replace_str'));
+    // 处理变量中包含有对元数据嵌入的变量
+    foreach ($param as $k => $v) {
+        $this->embedImage($k, $v, $param);
+    }
+    $content = $view->fetch($template, $param, [], $config);
+
+    return $this->html($content);
+});
+
+// 第三步：发送邮件
+$ret = Mailer::instance()
+        ->to('tianpian0805@gmail.com')
+        ->subject('测试邮件')
+        ->view('index@mail/index', [
+            'date' => date('Y-m-d H:i:s'),
+        ])
+        ->send();
+        
+// 第三步 (2)：如果你不需要使用view方法，可以忽略第二步
+$ret = Mailer::instance()
+        ->to('tianpian0805@gmail.com')
+        ->subject('测试邮件')
+        ->html('<img src="{image}"/>图片测试', [
+            'embed:image' => 'http://image34.360doc.com/DownloadImg/2011/08/2222/16275597_64.jpg'
+        ])
+        ->send();
+```
 
 OK, 此时你就能在你的框架中使用 Tp Mailer 了, 如果你还想做一件事 - Fork && Pull, 那就更好, 希望能一起完善 Tp Mailer
 
