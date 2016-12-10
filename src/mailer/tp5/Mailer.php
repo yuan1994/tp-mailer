@@ -11,7 +11,7 @@
 namespace mailer\tp5;
 
 use think\View;
-use think\ThinkConfig;
+use think\Config as ThinkConfig;
 
 /**
  * Class Mailer

@@ -26,7 +26,7 @@ class File
     public static function write($content, $level = self::DEBUG)
     {
         $now = date(' c ');
-        $path = Config::get('mail.log_path', __DIR__ . '/../../../../log');
+        $path = Config::get('log_path', __DIR__ . '/../../../../log');
         $destination = $path . '/mailer-' . date('Y-m-d') . '.log';
         // 自动创建日志目录
         if (!is_dir($path)) {
