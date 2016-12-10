@@ -16,8 +16,9 @@ namespace mailer\lib;
  */
 class Log
 {
-    const DEBUG = 'debug';
-    const INFO = 'info';
+    const DEBUG = 'DEBUG';
+    const INFO = 'INFO';
+    const ERROR = 'ERROR';
 
     /**
      * @var object 日志驱动

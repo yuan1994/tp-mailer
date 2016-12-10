@@ -16,7 +16,7 @@ use Swift_Message;
 /**
  * Class Mailer
  * @package mailer\lib
- * @method Mailer view()
+ * @method Mailer view(string $template, array $param = [], array $config = [])
  */
 class Mailer
 {
@@ -70,8 +70,8 @@ class Mailer
     /**
      * 动态注入方法
      *
-     * @param $methodName
-     * @param $methodCallable
+     * @param string   $methodName
+     * @param callable $methodCallable
      */
     public static function addMethod($methodName, $methodCallable)
     {
@@ -84,8 +84,8 @@ class Mailer
     /**
      * 动态调用方法
      *
-     * @param       $methodName
-     * @param array $args
+     * @param string $methodName
+     * @param array  $args
      *
      * @return $this
      */
@@ -130,7 +130,7 @@ class Mailer
     /**
      * 设置邮件主题
      *
-     * @param $subject
+     * @param string $subject
      *
      * @return $this
      */
@@ -144,8 +144,8 @@ class Mailer
     /**
      * 设置发件人
      *
-     * @param      $address
-     * @param null $name
+     * @param string|array $address
+     * @param null         $name
      *
      * @return $this
      */
@@ -159,8 +159,8 @@ class Mailer
     /**
      * 设置收件人
      *
-     * @param      $address
-     * @param null $name
+     * @param  string|array $address
+     * @param null          $name
      *
      * @return $this
      */
@@ -174,9 +174,9 @@ class Mailer
     /**
      * 设置邮件内容为HTML内容
      *
-     * @param       $content
-     * @param array $param
-     * @param array $config
+     * @param string $content
+     * @param array  $param
+     * @param array  $config
      *
      * @return $this
      */
@@ -193,9 +193,9 @@ class Mailer
     /**
      * 设置邮件内容为纯文本内容
      *
-     * @param       $content
-     * @param array $param
-     * @param array $config
+     * @param string $content
+     * @param array  $param
+     * @param array  $config
      *
      * @return $this
      */
@@ -212,9 +212,9 @@ class Mailer
     /**
      * 设置邮件内容为纯文本内容
      *
-     * @param       $content
-     * @param array $param
-     * @param array $config
+     * @param string $content
+     * @param array  $param
+     * @param array  $config
      *
      * @return Mailer
      */
@@ -226,9 +226,9 @@ class Mailer
     /**
      * 添加一行数据
      *
-     * @param       $content
-     * @param array $param
-     * @param array $config
+     * @param string $content
+     * @param array  $param
+     * @param array  $config
      *
      * @return $this
      */
@@ -242,8 +242,8 @@ class Mailer
     /**
      * 添加附件
      *
-     * @param string                        $filePath
-     * @param string|\Swift_Attachment|null $attr
+     * @param string               $filePath
+     * @param string|\Closure|null $attr
      *
      * @return $this
      */
@@ -341,7 +341,8 @@ class Mailer
     }
 
     /**
-     * 注册SwiftMailer插件, 详情请见 http://swiftmailer.org/docs/plugins.html
+     * 注册SwiftMailer插件
+     * 详情请见 http://swiftmailer.org/docs/plugins.html
      *
      * @param object $plugin
      */
@@ -412,7 +413,7 @@ class Mailer
             $swiftMailer = Swift_Mailer::newInstance($transportDriver);
             // debug模式记录日志
             if (Config::get('debug')) {
-                Log::write(var_export($this->getHeadersString(), true), 'MAILER');
+                Log::write(var_export($this->getHeadersString(), true), Log::INFO);
             }
 
             // 注册插件
@@ -431,6 +432,14 @@ class Mailer
             }
         } catch (\Exception $e) {
             $this->errMsg = $e->getMessage();
+
+            // 将错误信息记录在日志中
+            $log = "Error: " . $this->errMsg . "\n"
+                . '邮件头信息：' . "\n"
+                . var_export($this->getHeadersString(), true);
+            Log::write($log, Log::ERROR);
+
+            // 异常处理
             if (Config::get('debug')) {
                 // 调试模式直接抛出异常
                 throw new Exception($e->getMessage());
@@ -463,7 +472,7 @@ class Mailer
     /**
      * 中文文件名编码, 防止乱码
      *
-     * @param $string
+     * @param string $string
      *
      * @return string
      */
@@ -501,9 +510,9 @@ class Mailer
     /**
      * 对嵌入元数据的变量进行处理
      *
-     * @param $k
-     * @param $v
-     * @param $param
+     * @param string $k
+     * @param string $v
+     * @param array  $param
      */
     protected function embedImage(&$k, &$v, &$param)
     {
