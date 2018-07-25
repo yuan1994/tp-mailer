@@ -8,7 +8,7 @@
  * @license   http://www.apache.org/licenses/LICENSE-2.0
  */
 
-namespace mailer\tp5;
+namespace mailer\tp51;
 
 use think\View;
 use think\facade\Config as ThinkConfig;
